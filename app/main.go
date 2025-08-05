@@ -69,8 +69,15 @@ func isCharacterGroup(pattern string) bool {
 }
 
 func checkCharacterGroup(line []byte, group string) bool {
+	positive := true
 	if len(group) == 0 {
 		return false
+	} else if group[0] == '^' {
+		positive = false
+	}
+
+	if !positive {
+		return !bytes.ContainsAny(line, group[1:])
 	}
 
 	return bytes.ContainsAny(line, group)
