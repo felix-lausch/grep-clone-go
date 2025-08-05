@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -40,18 +41,23 @@ func main() {
 }
 
 func matchLine(line []byte, pattern string) (bool, error) {
+	var ok bool
+
 	if utf8.RuneCountInString(pattern) == 1 {
-		return bytes.ContainsAny(line, pattern), nil
+		ok = bytes.ContainsAny(line, pattern)
 	} else if pattern == "\\d" {
-		return bytes.ContainsAny(line, "0123456789"), nil
+		ok = bytes.ContainsAny(line, "0123456789")
+	} else if pattern == "\\w" {
+		ok = bytes.ContainsFunc(line, func(r rune) bool {
+			return unicode.IsDigit(r) || unicode.IsLetter(r) || r == '_'
+		})
 	}
 
-	return false, fmt.Errorf("unsupported pattern: %q", pattern)
+	if !ok {
+		return ok, fmt.Errorf("unsupported pattern: %q", pattern)
+	}
 
+	return ok, nil
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	// fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
-
-	// Uncomment this to pass the first stage
-
-	// return ok, nil
 }
