@@ -51,10 +51,8 @@ func matchLine(line []byte, pattern string) (bool, error) {
 		ok = bytes.ContainsFunc(line, func(r rune) bool {
 			return unicode.IsDigit(r) || unicode.IsLetter(r) || r == '_'
 		})
-	}
-
-	if !ok {
-		return ok, fmt.Errorf("unsupported pattern: %q", pattern)
+	} else {
+		return false, fmt.Errorf("unsupported pattern: %q", pattern)
 	}
 
 	return ok, nil
