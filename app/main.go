@@ -54,7 +54,7 @@ func matchLine(line []byte, pattern string) (bool, error) {
 			return unicode.IsDigit(r) || unicode.IsLetter(r) || r == '_'
 		})
 	} else if isCharacterGroup(pattern) {
-		ok = checkCharacterGroup(line, pattern)
+		ok = checkCharacterGroup(line, pattern[1:len(pattern)-1])
 	} else {
 		return false, fmt.Errorf("unsupported pattern: %q", pattern)
 	}
@@ -68,10 +68,10 @@ func isCharacterGroup(pattern string) bool {
 	return pattern[0] == '[' && pattern[len(pattern)-1] == ']'
 }
 
-func checkCharacterGroup(line []byte, pattern string) bool {
-	if len(line) <= 2 {
+func checkCharacterGroup(line []byte, group string) bool {
+	if len(group) == 0 {
 		return false
 	}
 
-	return bytes.ContainsAny(line, pattern[1:len(pattern)-1])
+	return bytes.ContainsAny(line, group)
 }
