@@ -77,6 +77,24 @@ func TestMatchLine(t *testing.T) {
 			pattern:  "(abc)",
 			expected: false,
 		},
+		{
+			name:     "Character negative group no match",
+			line:     "apple",
+			pattern:  "[^xyz]",
+			expected: true,
+		},
+		{
+			name:     "Character negative group match",
+			line:     "apple",
+			pattern:  "[^abc]",
+			expected: true,
+		},
+		{
+			name:     "Character negative group no match",
+			line:     "abc",
+			pattern:  "[^abc]",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {

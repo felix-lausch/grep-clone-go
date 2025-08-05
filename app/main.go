@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -27,13 +28,13 @@ func main() {
 		os.Exit(2)
 	}
 
-	ok, err := matchLine(line, pattern)
+	matched, err := matchLine(line, pattern)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(2)
 	}
 
-	if !ok {
+	if !matched {
 		os.Exit(1)
 	}
 
@@ -77,7 +78,9 @@ func checkCharacterGroup(line []byte, group string) bool {
 	}
 
 	if !positive {
-		return !bytes.ContainsAny(line, group[1:])
+		return bytes.ContainsFunc(line, func(r rune) bool {
+			return !strings.ContainsRune(group[1:], r)
+		})
 	}
 
 	return bytes.ContainsAny(line, group)
