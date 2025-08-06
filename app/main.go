@@ -73,56 +73,19 @@ func matchHere(remainingLine []rune, expressions []RegEx) bool {
 }
 
 func matchExpression(char rune, ex RegEx) bool {
-	var ok bool
-
 	switch ex.Type {
 	case Literal:
-		ok = char == ex.Char
+		return char == ex.Char
 	case Digit:
-		ok = unicode.IsDigit(char)
+		return unicode.IsDigit(char)
 	case AlphaNumeric:
-		ok = unicode.IsDigit(char) || unicode.IsLetter(char) || char == '_'
+		return unicode.IsDigit(char) || unicode.IsLetter(char) || char == '_'
 	case Group:
-		ok = checkCharacterGroup(char, ex.Group)
+		return checkCharacterGroup(char, ex.Group)
 	default:
-		//TODO: i could return an error here for unknown ex Type. not really need atm
-		ok = false
+		return false
 	}
-
-	return ok
 }
-
-// func matchLine(line []byte, pattern string) (bool, error) {
-// 	var ok bool
-
-// 	//2. go through expressions 1 at a time and attempt to match them
-
-// 	//3. only return 1 when all expressions could be matched
-
-// 	if utf8.RuneCountInString(pattern) == 1 {
-// 		ok = bytes.ContainsAny(line, pattern)
-// 	} else if pattern == "\\d" {
-// 		ok = bytes.ContainsFunc(line, func(r rune) bool {
-// 			return unicode.IsDigit(r)
-// 		})
-// 	} else if pattern == "\\w" {
-// 		ok = bytes.ContainsFunc(line, func(r rune) bool {
-// 			return unicode.IsDigit(r) || unicode.IsLetter(r) || r == '_'
-// 		})
-// 	} else if isCharacterGroup(pattern) {
-// 		ok = checkCharacterGroup(line, pattern[1:len(pattern)-1])
-// 	} else {
-// 		return false, fmt.Errorf("unsupported pattern: %q", pattern)
-// 	}
-
-// 	return ok, nil
-// 	// You can use print statements as follows for debugging, they'll be visible when running tests.
-// 	// fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
-// }
-
-// func isCharacterGroup(pattern string) bool {
-// 	return pattern[0] == '[' && pattern[len(pattern)-1] == ']'
-// }
 
 func checkCharacterGroup(char rune, group string) bool {
 	negative := group[0] == '^'
@@ -133,23 +96,6 @@ func checkCharacterGroup(char rune, group string) bool {
 
 	return strings.ContainsRune(group, char)
 }
-
-// func checkCharacterGroup(line []byte, group string) bool {
-// 	positive := true
-// 	if len(group) == 0 {
-// 		return false
-// 	} else if group[0] == '^' {
-// 		positive = false
-// 	}
-
-// 	if !positive {
-// 		return bytes.ContainsFunc(line, func(r rune) bool {
-// 			return !strings.ContainsRune(group[1:], r)
-// 		})
-// 	}
-
-// 	return bytes.ContainsAny(line, group)
-// }
 
 type RegExType int
 
