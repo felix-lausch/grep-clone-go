@@ -95,6 +95,48 @@ func TestMatchLine(t *testing.T) {
 			pattern:  "[^abc]",
 			expected: false,
 		},
+		{
+			name:     "Single Digit, multiple literals match",
+			line:     "1 apple",
+			pattern:  "\\d apple",
+			expected: true,
+		},
+		{
+			name:     "Single Digit, multiple literals no match",
+			line:     "1 orange",
+			pattern:  "\\d apple",
+			expected: false,
+		},
+		{
+			name:     "Multiple Digit, multiple literals match",
+			line:     "100 apple",
+			pattern:  "\\d\\d\\d apple",
+			expected: true,
+		},
+		{
+			name:     "Multiple Digit, multiple literals no match",
+			line:     "1 apple",
+			pattern:  "\\d\\d\\d apple",
+			expected: false,
+		},
+		{
+			name:     "1 Digit, multiple alphanumerics, 1 literal match",
+			line:     "3 cats",
+			pattern:  "\\d \\w\\w\\ws",
+			expected: true,
+		},
+		{
+			name:     "1 Digit, multiple alphanumerics, 1 literal match",
+			line:     "what if i put it in the middle 3 dogs of my sentene",
+			pattern:  "\\d \\w\\w\\ws",
+			expected: true,
+		},
+		{
+			name:     "1 Digit, multiple alphanumerics, 1 literal no match",
+			line:     "1 dog",
+			pattern:  "\\d \\w\\w\\ws",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
