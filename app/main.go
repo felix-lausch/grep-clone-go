@@ -67,12 +67,17 @@ func match(line []rune, expressions []RegEx) (bool, error) {
 }
 
 func matchHere(remainingLine []rune, expressions []RegEx) bool {
-	//TODO: watch this, it will be wrong once more complex expressions are added
-	if len(remainingLine) < len(expressions) {
-		return false
-	}
 
 	for i := range expressions {
+
+		if expressions[i].Type == EndAnchor && i == len(expressions)-1 {
+			return len(remainingLine) == i
+		}
+
+		if i >= len(remainingLine) {
+			return false
+		}
+
 		if !matchExpression(remainingLine[i], expressions[i]) {
 			return false
 		}
@@ -114,6 +119,7 @@ const (
 	AlphaNumeric
 	Group
 	StartAnchor
+	EndAnchor
 )
 
 type RegEx struct {
@@ -146,6 +152,9 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 			continue
 		} else if s == '^' && !groupActive {
 			result = append(result, RegEx{StartAnchor, "", '0'})
+			continue
+		} else if s == '$' {
+			result = append(result, RegEx{EndAnchor, "", '0'})
 			continue
 		}
 
