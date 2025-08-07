@@ -48,6 +48,15 @@ func matchLine(line []byte, pattern string) (bool, error) {
 }
 
 func match(line []rune, expressions []RegEx) (bool, error) {
+
+	if len(expressions) == 0 {
+		return false, errors.New("can't match empty expression")
+	}
+
+	if expressions[0].Type == StartAnchor {
+		return matchHere(line, expressions[1:]), nil
+	}
+
 	for i := range line {
 		if matchHere(line[i:], expressions) {
 			return true, nil
@@ -104,6 +113,7 @@ const (
 	Digit
 	AlphaNumeric
 	Group
+	StartAnchor
 )
 
 type RegEx struct {
@@ -115,7 +125,7 @@ type RegEx struct {
 func ParseExpressions(pattern string) ([]RegEx, error) {
 	result := []RegEx{}
 	escape := false
-	activeGroup := false
+	groupActive := false
 	currentGroup := []rune{}
 
 	for _, s := range pattern {
@@ -123,7 +133,7 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 			escape = true
 			continue
 		} else if s == '[' {
-			activeGroup = true
+			groupActive = true
 			continue
 		} else if s == ']' {
 			if len(currentGroup) == 0 {
@@ -131,8 +141,11 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 			}
 
 			result = append(result, RegEx{Group, string(currentGroup), '0'})
-			activeGroup = false
+			groupActive = false
 			currentGroup = []rune{}
+			continue
+		} else if s == '^' && !groupActive {
+			result = append(result, RegEx{StartAnchor, "", '0'})
 			continue
 		}
 
@@ -148,7 +161,7 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 
 			escape = false
 			continue
-		} else if activeGroup {
+		} else if groupActive {
 			if len(currentGroup) > 0 && s == '^' {
 				return nil, errors.New("invalid group snytax, only first rune of group can be ^")
 			}

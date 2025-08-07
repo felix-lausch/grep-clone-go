@@ -137,6 +137,18 @@ func TestMatchLine(t *testing.T) {
 			pattern:  "\\d \\w\\w\\ws",
 			expected: false,
 		},
+		{
+			name:     "StartAnchor match",
+			line:     "doggies in paradise",
+			pattern:  "^dog",
+			expected: true,
+		},
+		{
+			name:     "StartAnchor no match",
+			line:     "all dogs go to paradise",
+			pattern:  "^dog",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
