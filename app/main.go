@@ -131,6 +131,10 @@ func matchExpression(line []rune, ex RegEx) (bool, []rune) {
 		}
 	}
 
+	if len(line) == 0 {
+		return false, line
+	}
+
 	char := line[0]
 
 	switch ex.Type {

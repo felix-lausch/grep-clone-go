@@ -163,8 +163,8 @@ func TestMatchLine(t *testing.T) {
 		// },
 		{
 			name:     "OneOrMore quantifier match",
-			line:     "caats",
-			pattern:  "ca+ts",
+			line:     "ca",
+			pattern:  "ca+",
 			expected: true,
 		},
 	}
