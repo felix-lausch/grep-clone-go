@@ -67,22 +67,45 @@ func match(line []rune, expressions []RegEx) (bool, error) {
 }
 
 func matchHere(line []rune, expressions []RegEx) bool {
-	remainingLine := line
+	lineIndex := 0
+	exprIndex := 0
 
-	for i := range expressions {
+	for exprIndex < len(expressions) {
+		expr := expressions[exprIndex]
 
-		if expressions[i].Type == EndAnchor && i == len(expressions)-1 {
-			return len(line) == i
+		if expr.Type == EndAnchor && exprIndex == len(expressions)-1 {
+			return lineIndex == len(line)
 		}
 
-		if i >= len(line) {
+		if lineIndex >= len(line) {
 			return false
 		}
 
-		var matched bool
+		switch expr.Quantity {
+		case One:
+			// Simple: match exactly one rune
+			if !matchExpression(line[lineIndex], expr) {
+				return false
+			}
+			lineIndex++
+			exprIndex++
 
-		matched, remainingLine = matchExpression(remainingLine, expressions[i])
-		if !matched {
+		case OneOrMore:
+			// Must match at least one
+			if !matchExpression(line[lineIndex], expr) {
+				return false
+			}
+			// Match as many as possible
+			start := lineIndex
+			for lineIndex < len(line) && matchExpression(line[lineIndex], expr) {
+				lineIndex++
+			}
+			// Try all possible splits (backtracking-like)
+			for split := lineIndex; split > start; split-- {
+				if matchHere(line[split:], expressions[exprIndex+1:]) {
+					return true
+				}
+			}
 			return false
 		}
 	}
@@ -90,72 +113,18 @@ func matchHere(line []rune, expressions []RegEx) bool {
 	return true
 }
 
-// func matchExpression(char rune, ex RegEx) bool {
-// 	switch ex.Type {
-// 	case Literal:
-// 		return char == ex.Char
-// 	case Digit:
-// 		return unicode.IsDigit(char)
-// 	case AlphaNumeric:
-// 		return unicode.IsDigit(char) || unicode.IsLetter(char) || char == '_'
-// 	case Group:
-// 		return checkCharacterGroup(char, ex.Group)
-// 	default:
-// 		return false
-// 	}
-// }
-
-func matchExpression(line []rune, ex RegEx) (bool, []rune) {
-	if ex.Quantity == OneOrMore {
-		foundOne := false
-		remainingLine := line
-
-		for {
-			ex.Quantity = One
-			matched := false
-			matched, remainingLine = matchExpression(remainingLine, ex)
-
-			if !matched {
-				if foundOne {
-					return true, remainingLine
-				} else {
-					return false, remainingLine
-				}
-			}
-
-			if foundOne {
-				return true, remainingLine
-			}
-
-			foundOne = true
-		}
-	}
-
-	if len(line) == 0 {
-		return false, line
-	}
-
-	char := line[0]
-
+func matchExpression(char rune, ex RegEx) bool {
 	switch ex.Type {
 	case Literal:
-		res := char == ex.Char
-
-		if res {
-			return true, line[1:]
-		} else {
-			return false, line
-		}
-
-		// return char == ex.Char, line[1:]
+		return char == ex.Char
 	case Digit:
-		return unicode.IsDigit(char), line[1:]
+		return unicode.IsDigit(char)
 	case AlphaNumeric:
-		return unicode.IsDigit(char) || unicode.IsLetter(char) || char == '_', line[1:]
+		return unicode.IsDigit(char) || unicode.IsLetter(char) || char == '_'
 	case Group:
-		return checkCharacterGroup(char, ex.Group), line[1:]
+		return checkCharacterGroup(char, ex.Group)
 	default:
-		return false, line
+		return false
 	}
 }
 
