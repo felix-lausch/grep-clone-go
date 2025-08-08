@@ -39,12 +39,19 @@ func main() {
 }
 
 func matchLine(line []byte, pattern string) (bool, error) {
-	expressions, err := ParseExpressions(pattern)
+	alternations, err := ParseAlternations(pattern)
 	if err != nil {
 		return false, fmt.Errorf("error: parsing input pattern: %v", err)
 	}
 
-	return match([]rune(string(line)), expressions)
+	for _, expressions := range alternations {
+		matched, _ := match([]rune(string(line)), expressions)
+		if matched {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func match(line []rune, expressions []RegEx) (bool, error) {
@@ -178,6 +185,31 @@ type RegEx struct {
 	Group    string
 	Char     rune
 	Quantity QuantityType
+}
+
+func ParseAlternations(pattern string) ([][]RegEx, error) {
+	if len(pattern) == 0 {
+		return nil, errors.New("provided empty pattern")
+	}
+
+	result := [][]RegEx{}
+
+	if pattern[0] == '(' && pattern[len(pattern)-1] == ')' {
+		pattern = pattern[1 : len(pattern)-1]
+	}
+
+	splitPattern := strings.SplitSeq(pattern, "|")
+
+	for s := range splitPattern {
+		expressions, err := ParseExpressions(s)
+		if err != nil {
+			return nil, fmt.Errorf("error: parsing input pattern: %v", err)
+		}
+
+		result = append(result, expressions)
+	}
+
+	return result, nil
 }
 
 func ParseExpressions(pattern string) ([]RegEx, error) {

@@ -227,6 +227,24 @@ func TestMatchLine(t *testing.T) {
 			pattern:  "do.?",
 			expected: true,
 		},
+		{
+			name:     "Alternation match",
+			line:     "there wasn't cat",
+			pattern:  "(cat|dog)",
+			expected: true,
+		},
+		{
+			name:     "Alternation match",
+			line:     "there is a dog",
+			pattern:  "(cat|dog)",
+			expected: true,
+		},
+		{
+			name:     "Alternation match",
+			line:     "there is no required animal :/",
+			pattern:  "(cat|dog)",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
