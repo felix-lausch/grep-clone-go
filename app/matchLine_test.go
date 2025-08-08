@@ -240,9 +240,15 @@ func TestMatchLine(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "Alternation match",
+			name:     "Alternation combined match",
+			line:     "there is a dog",
+			pattern:  "a (cat|dog)",
+			expected: true,
+		},
+		{
+			name:     "Alternation no match",
 			line:     "there is no required animal :/",
-			pattern:  "(cat|dog)",
+			pattern:  "no (cat|dog)",
 			expected: false,
 		},
 	}

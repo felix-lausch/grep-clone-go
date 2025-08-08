@@ -193,15 +193,28 @@ func ParseAlternations(pattern string) ([][]RegEx, error) {
 	}
 
 	result := [][]RegEx{}
+	patterns := []string{}
 
-	if pattern[0] == '(' && pattern[len(pattern)-1] == ')' {
-		pattern = pattern[1 : len(pattern)-1]
+	openingBraceIdx := strings.Index(pattern, "(")
+	closingBraceIdx := strings.Index(pattern, ")")
+
+	//TODO: this assumes only one alternation possible per input pattern
+	if openingBraceIdx != -1 && closingBraceIdx != -1 {
+		splitPattern := strings.SplitSeq(pattern[openingBraceIdx+1:closingBraceIdx], "|")
+		patterns = []string{}
+
+		for s := range splitPattern {
+			pt := pattern[:openingBraceIdx] + s + pattern[closingBraceIdx+1:]
+			patterns = append(patterns, pt)
+		}
+	} else if openingBraceIdx == -1 && closingBraceIdx == -1 {
+		patterns = append(patterns, pattern)
+	} else {
+		return nil, errors.New("alternation syntax error")
 	}
 
-	splitPattern := strings.SplitSeq(pattern, "|")
-
-	for s := range splitPattern {
-		expressions, err := ParseExpressions(s)
+	for _, pt := range patterns {
+		expressions, err := ParseExpressions(pt)
 		if err != nil {
 			return nil, fmt.Errorf("error: parsing input pattern: %v", err)
 		}
