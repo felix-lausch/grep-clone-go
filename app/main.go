@@ -123,6 +123,10 @@ func matchExpression(line []rune, ex RegEx) (bool, []rune) {
 				}
 			}
 
+			if foundOne {
+				return true, remainingLine
+			}
+
 			foundOne = true
 		}
 	}
