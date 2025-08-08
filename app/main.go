@@ -119,6 +119,8 @@ func matchHere(line []rune, expressions []RegEx) bool {
 
 func matchExpression(char rune, ex RegEx) bool {
 	switch ex.Type {
+	case Wildcard:
+		return true
 	case Literal:
 		return char == ex.Char
 	case Digit:
@@ -162,6 +164,7 @@ const (
 	Group
 	StartAnchor
 	EndAnchor
+	Wildcard
 )
 
 const (
@@ -210,6 +213,9 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 			continue
 		} else if s == '?' {
 			result[len(result)-1].Quantity = ZeroOrOne
+			continue
+		} else if s == '.' {
+			result = append(result, RegEx{Wildcard, "", '0', One})
 			continue
 		}
 
