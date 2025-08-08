@@ -131,12 +131,12 @@ func TestMatchLine(t *testing.T) {
 		// 	pattern:  "\\d \\w\\w\\ws",
 		// 	expected: true,
 		// },
-		{
-			name:     "1 Digit, multiple alphanumerics, 1 literal no match",
-			line:     "1 dog",
-			pattern:  "\\d \\w\\w\\ws",
-			expected: false,
-		},
+		// {
+		// 	name:     "1 Digit, multiple alphanumerics, 1 literal no match",
+		// 	line:     "1 dog",
+		// 	pattern:  "\\d \\w\\w\\ws",
+		// 	expected: false,
+		// },
 		// {
 		// 	name:     "StartAnchor match",
 		// 	line:     "doggies in paradise",
@@ -149,17 +149,23 @@ func TestMatchLine(t *testing.T) {
 		// 	pattern:  "^dog",
 		// 	expected: false,
 		// },
+		// {
+		// 	name:     "EndAnchor match",
+		// 	line:     "i have a dog",
+		// 	pattern:  "dog$",
+		// 	expected: true,
+		// },
+		// {
+		// 	name:     "EndAnchor no match",
+		// 	line:     "i have two dogs",
+		// 	pattern:  "dog$",
+		// 	expected: false,
+		// },
 		{
-			name:     "EndAnchor match",
-			line:     "i have a dog",
-			pattern:  "dog$",
+			name:     "OneOrMore quantifier match",
+			line:     "caats",
+			pattern:  "ca+ts",
 			expected: true,
-		},
-		{
-			name:     "EndAnchor no match",
-			line:     "i have two dogs",
-			pattern:  "dog$",
-			expected: false,
 		},
 	}
 

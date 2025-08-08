@@ -66,19 +66,23 @@ func match(line []rune, expressions []RegEx) (bool, error) {
 	return false, nil
 }
 
-func matchHere(remainingLine []rune, expressions []RegEx) bool {
+func matchHere(line []rune, expressions []RegEx) bool {
+	remainingLine := line
 
 	for i := range expressions {
 
 		if expressions[i].Type == EndAnchor && i == len(expressions)-1 {
-			return len(remainingLine) == i
+			return len(line) == i
 		}
 
-		if i >= len(remainingLine) {
+		if i >= len(line) {
 			return false
 		}
 
-		if !matchExpression(remainingLine[i], expressions[i]) {
+		var matched bool
+
+		matched, remainingLine = matchExpression(remainingLine, expressions[i])
+		if !matched {
 			return false
 		}
 	}
@@ -86,18 +90,64 @@ func matchHere(remainingLine []rune, expressions []RegEx) bool {
 	return true
 }
 
-func matchExpression(char rune, ex RegEx) bool {
+// func matchExpression(char rune, ex RegEx) bool {
+// 	switch ex.Type {
+// 	case Literal:
+// 		return char == ex.Char
+// 	case Digit:
+// 		return unicode.IsDigit(char)
+// 	case AlphaNumeric:
+// 		return unicode.IsDigit(char) || unicode.IsLetter(char) || char == '_'
+// 	case Group:
+// 		return checkCharacterGroup(char, ex.Group)
+// 	default:
+// 		return false
+// 	}
+// }
+
+func matchExpression(line []rune, ex RegEx) (bool, []rune) {
+	if ex.Quantity == OneOrMore {
+		foundOne := false
+		remainingLine := line
+
+		for {
+			ex.Quantity = One
+			matched := false
+			matched, remainingLine = matchExpression(remainingLine, ex)
+
+			if !matched {
+				if foundOne {
+					return true, remainingLine
+				} else {
+					return false, remainingLine
+				}
+			}
+
+			foundOne = true
+		}
+	}
+
+	char := line[0]
+
 	switch ex.Type {
 	case Literal:
-		return char == ex.Char
+		res := char == ex.Char
+
+		if res {
+			return true, line[1:]
+		} else {
+			return false, line
+		}
+
+		// return char == ex.Char, line[1:]
 	case Digit:
-		return unicode.IsDigit(char)
+		return unicode.IsDigit(char), line[1:]
 	case AlphaNumeric:
-		return unicode.IsDigit(char) || unicode.IsLetter(char) || char == '_'
+		return unicode.IsDigit(char) || unicode.IsLetter(char) || char == '_', line[1:]
 	case Group:
-		return checkCharacterGroup(char, ex.Group)
+		return checkCharacterGroup(char, ex.Group), line[1:]
 	default:
-		return false
+		return false, line
 	}
 }
 
@@ -112,6 +162,7 @@ func checkCharacterGroup(char rune, group string) bool {
 }
 
 type RegExType int
+type QuantityType int
 
 const (
 	Literal RegExType = iota
@@ -122,10 +173,16 @@ const (
 	EndAnchor
 )
 
+const (
+	One QuantityType = iota
+	OneOrMore
+)
+
 type RegEx struct {
-	Type  RegExType
-	Group string
-	Char  rune
+	Type     RegExType
+	Group    string
+	Char     rune
+	Quantity QuantityType
 }
 
 func ParseExpressions(pattern string) ([]RegEx, error) {
@@ -146,24 +203,27 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 				return nil, errors.New("invalid group snytax, provided empty group")
 			}
 
-			result = append(result, RegEx{Group, string(currentGroup), '0'})
+			result = append(result, RegEx{Group, string(currentGroup), '0', One})
 			groupActive = false
 			currentGroup = []rune{}
 			continue
 		} else if s == '^' && !groupActive {
-			result = append(result, RegEx{StartAnchor, "", '0'})
+			result = append(result, RegEx{StartAnchor, "", '0', One})
 			continue
 		} else if s == '$' {
-			result = append(result, RegEx{EndAnchor, "", '0'})
+			result = append(result, RegEx{EndAnchor, "", '0', One})
+			continue
+		} else if s == '+' {
+			result[len(result)-1].Quantity = OneOrMore
 			continue
 		}
 
 		if escape {
 			switch s {
 			case 'd':
-				result = append(result, RegEx{Digit, "", '0'})
+				result = append(result, RegEx{Digit, "", '0', One})
 			case 'w':
-				result = append(result, RegEx{AlphaNumeric, "", '0'})
+				result = append(result, RegEx{AlphaNumeric, "", '0', One})
 			default:
 				return nil, fmt.Errorf("escaped unknown character %v", s)
 			}
@@ -179,7 +239,7 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 			continue
 		}
 
-		result = append(result, RegEx{Literal, "", s})
+		result = append(result, RegEx{Literal, "", s, One})
 	}
 
 	return result, nil
