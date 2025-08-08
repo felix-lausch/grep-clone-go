@@ -246,6 +246,12 @@ func TestMatchLine(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "2 Alternations match",
+			line:     "I see a dog and a cow",
+			pattern:  "I see a (cat|dog|cow)s?(, | and )",
+			expected: true,
+		},
+		{
 			name:     "Alternation no match",
 			line:     "there is no required animal :/",
 			pattern:  "no (cat|dog)",
