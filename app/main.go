@@ -195,22 +195,31 @@ func ParseAlternations(pattern string) ([][]RegEx, error) {
 	result := [][]RegEx{}
 	patterns := []string{}
 
-	openingBraceIdx := strings.Index(pattern, "(")
-	closingBraceIdx := strings.Index(pattern, ")")
+	for {
+		//TODO: this assumes no nested alternations (which is still incorrect)
+		openingBraceIdx := strings.Index(pattern, "(")
+		closingBraceIdx := strings.Index(pattern, ")")
 
-	//TODO: this assumes only one alternation possible per input pattern
-	if openingBraceIdx != -1 && closingBraceIdx != -1 {
-		splitPattern := strings.SplitSeq(pattern[openingBraceIdx+1:closingBraceIdx], "|")
-		patterns = []string{}
+		if openingBraceIdx == -1 && closingBraceIdx == -1 {
+			if len(patterns) == 0 {
+				//Add the original pattern if it didn't contain any alternations
+				patterns = append(patterns, pattern)
+			}
 
-		for s := range splitPattern {
-			pt := pattern[:openingBraceIdx] + s + pattern[closingBraceIdx+1:]
-			patterns = append(patterns, pt)
+			break
+
+		} else if openingBraceIdx != -1 && closingBraceIdx != -1 {
+			splitPattern := strings.SplitSeq(pattern[openingBraceIdx+1:closingBraceIdx], "|")
+
+			for s := range splitPattern {
+				pt := pattern[:openingBraceIdx] + s + pattern[closingBraceIdx+1:]
+				patterns = append(patterns, pt)
+			}
+
+			pattern = pattern[closingBraceIdx+1:]
+		} else {
+			return nil, errors.New("alternation syntax error")
 		}
-	} else if openingBraceIdx == -1 && closingBraceIdx == -1 {
-		patterns = append(patterns, pattern)
-	} else {
-		return nil, errors.New("alternation syntax error")
 	}
 
 	for _, pt := range patterns {
