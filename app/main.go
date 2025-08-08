@@ -78,20 +78,18 @@ func matchHere(line []rune, expressions []RegEx) bool {
 		}
 
 		if lineIndex >= len(line) {
-			return false
+			return hasMandatoryQuantities(expressions[exprIndex:])
 		}
 
 		switch expr.Quantity {
-		case One:
-			// Simple: match exactly one rune
+		case One: // Match exactly one rune
 			if !matchExpression(line[lineIndex], expr) {
 				return false
 			}
 			lineIndex++
 			exprIndex++
 
-		case OneOrMore:
-			// Must match at least one
+		case OneOrMore: // Must match at least one
 			if !matchExpression(line[lineIndex], expr) {
 				return false
 			}
@@ -100,13 +98,19 @@ func matchHere(line []rune, expressions []RegEx) bool {
 			for lineIndex < len(line) && matchExpression(line[lineIndex], expr) {
 				lineIndex++
 			}
-			// Try all possible splits (backtracking-like)
+			// Try all possible paths
 			for split := lineIndex; split > start; split-- {
 				if matchHere(line[split:], expressions[exprIndex+1:]) {
 					return true
 				}
 			}
 			return false
+
+		case ZeroOrOne: // Match zero or one
+			if matchExpression(line[lineIndex], expr) {
+				lineIndex++
+			}
+			exprIndex++
 		}
 	}
 
@@ -138,6 +142,16 @@ func checkCharacterGroup(char rune, group string) bool {
 	return strings.ContainsRune(group, char)
 }
 
+func hasMandatoryQuantities(expressions []RegEx) bool {
+	for _, ex := range expressions {
+		if ex.Quantity != ZeroOrOne {
+			return false
+		}
+	}
+
+	return true
+}
+
 type RegExType int
 type QuantityType int
 
@@ -153,6 +167,7 @@ const (
 const (
 	One QuantityType = iota
 	OneOrMore
+	ZeroOrOne
 )
 
 type RegEx struct {
@@ -192,6 +207,9 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 			continue
 		} else if s == '+' {
 			result[len(result)-1].Quantity = OneOrMore
+			continue
+		} else if s == '?' {
+			result[len(result)-1].Quantity = ZeroOrOne
 			continue
 		}
 

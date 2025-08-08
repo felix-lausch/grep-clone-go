@@ -170,7 +170,7 @@ func TestMatchLine(t *testing.T) {
 		{
 			name:     "OneOrMore backtracking match",
 			line:     "caaaats",
-			pattern:  "ca+ats",
+			pattern:  "ca+at",
 			expected: true,
 		},
 		{
@@ -181,8 +181,32 @@ func TestMatchLine(t *testing.T) {
 		},
 		{
 			name:     "OneOrMore no match",
-			line:     "cow",
+			line:     "ca",
 			pattern:  "ca+t",
+			expected: false,
+		},
+		{
+			name:     "OneOrMore no match",
+			line:     "act",
+			pattern:  "ca+t",
+			expected: false,
+		},
+		{
+			name:     "ZeroOrOne match",
+			line:     "dogs",
+			pattern:  "dogs?",
+			expected: true,
+		},
+		{
+			name:     "ZeroOrOne match",
+			line:     "dog",
+			pattern:  "dogs?",
+			expected: true,
+		},
+		{
+			name:     "ZeroOrOne no match",
+			line:     "cat",
+			pattern:  "dogs?",
 			expected: false,
 		},
 	}
