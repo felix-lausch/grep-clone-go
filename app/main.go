@@ -39,7 +39,7 @@ func main() {
 }
 
 func matchLine(line []byte, pattern string) (bool, error) {
-	alternations, err := parseAlternations2(pattern)
+	alternations, err := parseAlternations(pattern)
 	if err != nil {
 		return false, fmt.Errorf("error: parsing input pattern: %v", err)
 	}
@@ -187,112 +187,67 @@ type RegEx struct {
 	Quantity QuantityType
 }
 
-type Brace struct {
-	idxOpen  int
-	idxClose int
-	char     byte
-}
+func resolverInnerBrace(input []string) (bool, []string) {
+	openingBraces := []int{}
+	patterns := make(map[string]struct{})
 
-func findAllBraces(s string) []Brace {
-	var braces []Brace
+	for _, pattern := range input {
+		for i, r := range pattern {
 
-	for i, r := range s {
-		if r == '(' {
-			braces = append(braces, Brace{i, -1, '('})
-		}
+			if r == '(' {
+				openingBraces = append(openingBraces, i)
+			}
 
-		if r == ')' {
-			for j := len(braces) - 1; j >= 0; j-- {
-				if braces[j].idxClose == -1 {
-					braces[j].idxClose = i
-					break
+			if r == ')' {
+				openingBraceIdx := openingBraces[len(openingBraces)-1]
+				closingBraceIdx := i
+
+				//evaluate alternations and add options to patterns
+				splitPattern := strings.SplitSeq(pattern[openingBraceIdx+1:closingBraceIdx], "|")
+
+				for s := range splitPattern {
+					pt := pattern[:openingBraceIdx] + s + pattern[closingBraceIdx+1:]
+					patterns[pt] = struct{}{}
 				}
+
+				break
 			}
 		}
 	}
-	return braces
+
+	if len(patterns) > 0 {
+		return true, keys(patterns)
+	}
+
+	return false, input
 }
 
-func parseAlternations2(pattern string) ([][]RegEx, error) {
-	patterns := []string{}
+func keys(m map[string]struct{}) []string {
+	result := make([]string, 0, len(m))
 
-	var braces []Brace
+	for key := range m {
+		result = append(result, key)
+	}
 
-	for i, r := range pattern {
-		if r == '(' {
-			braces = append(braces, Brace{i, -1, '('})
-		}
+	return result
+}
 
-		if r == ')' {
-			for j := len(braces) - 1; j >= 0; j-- {
-				if braces[j].idxClose == -1 {
-					braces[j].idxClose = i
+func parseAlternations(input string) ([][]RegEx, error) {
+	patterns := []string{input}
 
-					//TODO: evaluate alterations and add to patterns
-					// splitPattern := strings.SplitSeq(pattern[openingBraceIdx+1:closingBraceIdx], "|")
+	for {
+		hasMore, nextPatterns := resolverInnerBrace(patterns)
+		patterns = nextPatterns
 
-					// for s := range splitPattern {
-					// 	pt := pattern[:openingBraceIdx] + s + pattern[closingBraceIdx+1:]
-					// 	patterns = append(patterns, pt)
-					// }
-
-					break
-				}
-			}
+		if !hasMore {
+			break
 		}
 	}
 
 	result := [][]RegEx{}
 
 	if len(patterns) == 0 {
-		patterns = append(patterns, pattern)
-	}
-
-	for _, pt := range patterns {
-		expressions, err := ParseExpressions(pt)
-		if err != nil {
-			return nil, fmt.Errorf("error: parsing input pattern: %v", err)
-		}
-
-		result = append(result, expressions)
-	}
-
-	return result, nil
-}
-
-func parseAlternations(pattern string) ([][]RegEx, error) {
-	if len(pattern) == 0 {
-		return nil, errors.New("provided empty pattern")
-	}
-
-	result := [][]RegEx{}
-	patterns := []string{}
-
-	for {
-		//TODO: this assumes no nested alternations (which is still incorrect)
-		openingBraceIdx := strings.Index(pattern, "(")
-		closingBraceIdx := strings.Index(pattern, ")")
-
-		if openingBraceIdx == -1 && closingBraceIdx == -1 {
-			if len(patterns) == 0 {
-				//Add the original pattern if it didn't contain any alternations
-				patterns = append(patterns, pattern)
-			}
-
-			break
-
-		} else if openingBraceIdx != -1 && closingBraceIdx != -1 {
-			splitPattern := strings.SplitSeq(pattern[openingBraceIdx+1:closingBraceIdx], "|")
-
-			for s := range splitPattern {
-				pt := pattern[:openingBraceIdx] + s + pattern[closingBraceIdx+1:]
-				patterns = append(patterns, pt)
-			}
-
-			pattern = pattern[closingBraceIdx+1:]
-		} else {
-			return nil, errors.New("alternation syntax error")
-		}
+		patterns = append(patterns, input)
 	}
 
 	for _, pt := range patterns {
