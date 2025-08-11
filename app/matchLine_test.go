@@ -257,6 +257,12 @@ func TestMatchLine(t *testing.T) {
 			pattern:  "no (cat|dog)",
 			expected: false,
 		},
+		{
+			name:     "Combined alternation match",
+			line:     "I see 1 cat, 2 dogs and 3 cows",
+			pattern:  "^I see (\\d (cat|dog|cow)s?(, | and )?)+$",
+			expected: true,
+		},
 	}
 
 	for _, tt := range tests {

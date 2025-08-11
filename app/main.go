@@ -187,6 +187,7 @@ type RegEx struct {
 	Quantity QuantityType
 }
 
+// resolves an inner brace and returns a new string for each possible alteration
 func resolverInnerBrace(input []string) (bool, []string) {
 	openingBraces := []int{}
 	patterns := make(map[string]struct{})
@@ -222,16 +223,12 @@ func resolverInnerBrace(input []string) (bool, []string) {
 	return false, input
 }
 
-func keys(m map[string]struct{}) []string {
-	result := make([]string, 0, len(m))
-
-	for key := range m {
-		result = append(result, key)
-	}
-
-	return result
-}
-
+// TODO: this was based on entirely wrong assumptions
+// for this to work i need to be able to support a new RegEx Type "Group" that supports it's own collection of regex,
+// possible alternations of regexes and quantifiers
+// every regex type: group can have multiple groups (nested or chained) inside of it
+// this means that the matching logic needs to be completely changed as well because it absolutely doesnt work
+// on a 1rune=1expression basis anymore
 func parseAlternations(input string) ([][]RegEx, error) {
 	patterns := []string{input}
 
@@ -326,4 +323,14 @@ func ParseExpressions(pattern string) ([]RegEx, error) {
 	}
 
 	return result, nil
+}
+
+func keys(m map[string]struct{}) []string {
+	result := make([]string, 0, len(m))
+
+	for key := range m {
+		result = append(result, key)
+	}
+
+	return result
 }
